@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tic-Tac-Toe</title>
+<h1>Tic-Tac-Toe</h1>
+    <style>
+        h1{
+            font-family:'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
+            font-size: xx-large;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            background-color: lightcyan;
+        }
+
+        #board {
+            display: grid;
+            grid-template-columns: repeat(3, 100px);
+            grid-gap: 5px;
+            box-shadow: 10px black;
+        }
+
+        .cell {
+            width: 100px;
+            height: 100px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 24px;
+            font-weight: bold;
+            border: 2px solid #333;
+            cursor: pointer;
+            background-color: aqua;
+        }
+
+        .cell:hover {
+            background-color: pink;
+        
+        }
+
+        #bottom-container {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+            background-color: pink;
+        }
+
+        .draggable {
+            width: 50px;
+            height: 50px;
+            border: 2px solid #333;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 24px;
+            cursor: grab;
+        }
+
+        #announcement-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background: #fff;
+            padding: 20px;
+            border-radius: 5px;
+            text-align: center;
+        }
+
+        #close-modal {
+            cursor: pointer;
+            color: #333;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+    </style>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const board = document.getElementById('board');
+            const bottomContainer = document.getElementById('bottom-container');
+            const announcementModal = document.getElementById('announcement-modal');
+            const announcementContent = document.getElementById('announcement-content');
+            let currentPlayer = 'X';
+            let gameBoard = ['', '', '', '', '', '', '', '', ''];
+            let gameActive = true;
+            let draggedItem = null;
+
+            function checkWinner() {
+                const winningCombinations = [
+                    [0, 1, 2], [3, 4, 5], [6, 7, 8],
+                    [0, 3, 6], [1, 4, 7], [2, 5, 8],
+                    [0, 4, 8], [2, 4, 6]
+                ];
+
+                for (const combo of winningCombinations) {
+                    const [a, b, c] = combo;
+                    if (gameBoard[a] && gameBoard[a] === gameBoard[b] && gameBoard[a] === gameBoard[c]) {
+                        return gameBoard[a];
+                    }
+                }
+
+                return null;
+            }
+
+            function checkDraw() {
+                return !gameBoard.includes('');
+            }
+
+            function handleCellClick(index) {
+                if (!gameBoard[index] && gameActive) {
+                    gameBoard[index] = currentPlayer;
+                    document.getElementById(`cell-${index}`).innerText = currentPlayer;
+
+                    const winner = checkWinner();
+                    if (winner) {
+                        showAnnouncement(`${winner} is the winner!`);
+                        gameActive = false;
+                    } else if (checkDraw()) {
+                        showAnnouncement("It's a draw!");
+                        gameActive = false;
+                    } else {
+                        currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
+                    }
+                }
+            }
+
+            function handleDragStart() {
+                draggedItem = this.cloneNode(true);
+                draggedItem.classList.add('dragging');
+            }
+
+            function handleDragEnd() {
+                draggedItem.classList.remove('dragging');
+                draggedItem = null;
+            }
+
+            function handleDragOver(e) {
+                e.preventDefault();
+            }
+
+            function handleDrop(index) {
+                if (!gameBoard[index] && gameActive) {
+                    gameBoard[index] = currentPlayer;
+                    document.getElementById(`cell-${index}`).innerText = currentPlayer;
+
+                    const winner = checkWinner();
+                    if (winner) {
+                        showAnnouncement(`${winner} is the winner!`);
+                        gameActive = false;
+                    } else if (checkDraw()) {
+                        showAnnouncement("It's a draw!");
+                        gameActive = false;
+                    } else {
+                        currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
+                    }
+                }
+            }
+
+            function showAnnouncement(message) {
+                announcementContent.innerText = message;
+                announcementModal.style.display = 'flex';
+            }
+
+            function hideAnnouncement() {
+                announcementModal.style.display = 'none';
+            }
+
+            function createCell(index) {
+                const cell = document.createElement('div');
+                cell.className = 'cell';
+                cell.id = `cell-${index}`;
+                cell.addEventListener('click', () => handleCellClick(index));
+                cell.setAttribute('draggable', true);
+                cell.addEventListener('dragover', handleDragOver);
+                cell.addEventListener('drop', () => handleDrop(index));
+                return cell;
+            }
+
+            function createDraggableSymbol(symbol) {
+                const draggableSymbol = document.createElement('div');
+                draggableSymbol.className = 'draggable';
+                draggableSymbol.innerText = symbol;
+                draggableSymbol.setAttribute('draggable', true);
+                draggableSymbol.addEventListener('dragstart', handleDragStart);
+                draggableSymbol.addEventListener('dragend', handleDragEnd);
+                return draggableSymbol;
+            }
+
+            for (let i = 0; i < 9; i++) {
+                const cell = createCell(i);
+                board.appendChild(cell);
+            }
+
+            const xSymbol = createDraggableSymbol('X');
+            const oSymbol = createDraggableSymbol('O');
+
+            bottomContainer.appendChild(xSymbol);
+            bottomContainer.appendChild(oSymbol);
+            const closeModalButton = document.getElementById('close-modal');
+            closeModalButton.addEventListener('click', hideAnnouncement);
+        });
+    </script>
+</head>
+<body>
+    <div id="board"></div>
+    
+    <div id="bottom-container">
+        <div class="draggable" draggable="true">X</div>
+        <div class="draggable" draggable="true">O</div>
+    </div>
+
+    <div id="announcement-modal">
+        <div class="modal-content">
+            <div id="announcement-content"></div>
+            <div id="close-modal">Close</div>
+        </div>
+    </div>
+</body>
+</html>
